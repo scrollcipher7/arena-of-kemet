@@ -13,6 +13,7 @@ public class Unit : MonoBehaviour
     public float vsStructureMult = 1f;   // summoned bosses hit structures x3
 
     [System.NonSerialized] public Vector3? moveTarget;
+    [HideInInspector] public float revealUntil = 0f;  // striking betrays you to the fog, briefly
     [HideInInspector] public float slowT = 0f;
     [HideInInspector] public float slowPct = 0.45f;   // how deep the current slow cuts
 
@@ -161,5 +162,8 @@ public static class Combat
         if (ba != null) ba.PlayAttack();
         // And the shot is HEARD — bow, spell, or the tower's stone-bow.
         if (AudioDirector.Instance != null) AudioDirector.Instance.PlayShot(source);
+        // To strike is to be SEEN: the fog lifts off the maker briefly.
+        var shotUnit = source != null ? source.GetComponent<Unit>() : null;
+        if (shotUnit != null) shotUnit.revealUntil = Time.time + 1.5f;
     }
 }

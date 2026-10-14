@@ -9,9 +9,14 @@ public class OverheadBar : MonoBehaviour
 {
     public float height = 2.7f;
     public bool showText = false;
+    public float barScale = 1f;
+    public bool fogVisible = true;
 
     Unit unit;
     Hero hero;
+    Structure structure;
+    Health hp;
+    Team barTeam;
     GameObject root;
     Image fill;
     Text levelText;
@@ -21,18 +26,25 @@ public class OverheadBar : MonoBehaviour
     {
         unit = GetComponent<Unit>();
         hero = GetComponent<Hero>();
-        if (unit == null || unit.health == null) { enabled = false; return; }
+        structure = GetComponent<Structure>();
+        if (unit != null && unit.health != null) { hp = unit.health; barTeam = unit.team; }
+        else if (structure != null)
+        {
+            hp = structure.health != null ? structure.health : GetComponent<Health>();
+            barTeam = structure.team;
+        }
+        if (hp == null) { enabled = false; return; }
 
         root = new GameObject("OverheadBar_" + gameObject.name);
         var canvas = root.AddComponent<Canvas>();
         canvas.renderMode = RenderMode.WorldSpace;
         canvas.sortingOrder = 20;
-        root.transform.localScale = Vector3.one * 0.0085f;
+        root.transform.localScale = Vector3.one * 0.0085f * barScale;
 
         float W = showText ? 132f : 92f;
         var bg = Bar(root.transform, new Vector2(W, 13f), new Vector2(0, 0), new Color(0, 0, 0, 0.55f));
         fill = Bar(root.transform, new Vector2(W - 4f, 9f), new Vector2(0, 0),
-            unit.team == Team.Kemet ? new Color(0.98f, 0.74f, 0.22f) : new Color(0.60f, 0.79f, 0.98f));
+            barTeam == Team.Kemet ? new Color(0.98f, 0.74f, 0.22f) : new Color(0.60f, 0.79f, 0.98f));
         fill.type = Image.Type.Filled;
         fill.fillMethod = Image.FillMethod.Horizontal;
         fill.fillOrigin = (int)Image.OriginHorizontal.Left;
@@ -91,13 +103,13 @@ public class OverheadBar : MonoBehaviour
     void LateUpdate()
     {
         if (!built) return;
-        bool alive = unit != null && unit.IsAlive;
-        root.SetActive(alive);
+        bool alive = hp != null && !hp.dead && (unit == null || unit.IsAlive);
+        root.SetActive(alive && fogVisible);
         if (!alive) return;
-        root.transform.position = unit.transform.position + Vector3.up * height;
+        root.transform.position = transform.position + Vector3.up * height;
         var cam = Camera.main;
         if (cam != null) root.transform.rotation = cam.transform.rotation;
-        fill.fillAmount = unit.health.Frac;
+        fill.fillAmount = hp.Frac;
         if (levelText != null && hero != null) levelText.text = hero.level.ToString();
     }
 

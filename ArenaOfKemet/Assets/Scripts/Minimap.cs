@@ -109,6 +109,12 @@ public class Minimap : MonoBehaviour
                     heart.anchorMin = heart.anchorMax = new Vector2(0.5f, 0.5f);
                 }
             }
+            else if (FogOfWar.Instance != null && gm.playerHero != null && h.team != gm.playerHero.team
+                     && !FogOfWar.Instance.IsSeen(h.transform.position) && Time.time >= h.revealUntil)
+            {
+                // The fog holds him: no mark on the map.
+                if (dots.TryGetValue(h, out var d) && d != null) d.gameObject.SetActive(false);
+            }
             else
             {
                 Place(h, h.transform.position, 10f,
@@ -121,6 +127,12 @@ public class Minimap : MonoBehaviour
         foreach (var u in gm.units)
         {
             if (u is Hero || !u.IsAlive) continue;
+            // The fog's law on the small map too: enemy specks and the
+            // jungle's beasts show only where the court has eyes.
+            if (FogOfWar.Instance != null && gm.playerHero != null
+                && (u is JungleBeast || u.team != gm.playerHero.team)
+                && !FogOfWar.Instance.IsSeen(u.transform.position)
+                && Time.time >= u.revealUntil) continue;
             if (mi >= 90) break;
             while (minionDots.Count <= mi) minionDots.Add(MakeDot(panel, 4f, Color.white));
             var rt = minionDots[mi++];

@@ -74,7 +74,7 @@ public class Structure : MonoBehaviour
             if (Time.time - gateFlashT > 0.6f)
             {
                 gateFlashT = Time.time;
-                HitFlash.Spawn(transform.position + Vector3.up * 3.4f,
+                HitFlash.Spawn(transform.position + Vector3.up * 6.0f,
                     new Color(0.75f, 0.88f, 1f), 2.6f, 0.25f);
             }
             return 0f;
@@ -155,7 +155,7 @@ public class Structure : MonoBehaviour
                 pierce = true;
             }
             else rampTarget = null;
-            Combat.SpawnProjectile(transform.position + Vector3.up * 5.2f, best,
+            Combat.SpawnProjectile(transform.position + Vector3.up * 9.9f, best,
                 dmg, gameObject, team, false, 0f, 1f, pierce);
         }
     }

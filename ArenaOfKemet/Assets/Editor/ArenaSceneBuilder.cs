@@ -140,6 +140,7 @@ public static class ArenaSceneBuilder
         gm.AddComponent<AudioDirector>();
         gm.AddComponent<IntroScreen>();
         gm.AddComponent<SelectionHall>();
+        gm.AddComponent<FogOfWar>();
 
         // Camera over the whole war — and the rig that rides with your god.
         var cam = Camera.main;
@@ -408,8 +409,12 @@ public static class ArenaSceneBuilder
         var cap = Prim(PrimitiveType.Sphere, name + "_Capstone", go.transform,
             new Vector3(x, 8.3f, z), new Vector3(1.1f, 1.1f, 1.1f), mat);
         Object.DestroyImmediate(cap.GetComponent<Collider>());
+        // The Vision's crown: a great crystal burning over the pyramid.
+        CrystalCluster(go.transform, new Vector3(x, 9.7f, z), 1.6f, Vector3.one);
         var s = go.AddComponent<Structure>();
         s.team = Team.Kemet; s.isCore = true; s.radius = 4.2f;
+        var pbar = go.AddComponent<OverheadBar>();
+        pbar.height = 13.4f; pbar.barScale = 4.6f;
     }
 
     static void BuildGreekTempleCore(Transform root, string name, float x, float z, Material mat)
@@ -442,8 +447,12 @@ public static class ArenaSceneBuilder
             new Vector3(x, 6.3f, z), new Vector3(11.5f, 2.4f, 2.4f), mat);
         ped.transform.rotation = Quaternion.Euler(45f, 0, 0);
         Object.DestroyImmediate(ped.GetComponent<Collider>());
+        // Olympus answers with a crystal of its own over the pediment.
+        CrystalCluster(go.transform, new Vector3(x, 8.15f, z), 1.35f, Vector3.one);
         var s = go.AddComponent<Structure>();
         s.team = Team.Olympus; s.isCore = true; s.radius = 4.4f;
+        var gbar = go.AddComponent<OverheadBar>();
+        gbar.height = 11.9f; gbar.barScale = 4.6f;
     }
 
     static void BuildHero(Transform root, string objName, string heroName, Team team,
@@ -579,40 +588,180 @@ public static class ArenaSceneBuilder
         float x, float z, Material mat)
     {
         var go = Prim(PrimitiveType.Cylinder, name, root,
-            new Vector3(x, core ? 3.25f : 2.3f, z),
-            core ? new Vector3(3.2f, 6.5f, 3.2f) : new Vector3(1.7f, 4.2f, 1.7f), mat);
+            new Vector3(x, core ? 3.25f : 4.6f, z),
+            core ? new Vector3(3.2f, 6.5f, 3.2f) : new Vector3(3.4f, 9.2f, 3.4f), mat);
         var s = go.AddComponent<Structure>();
         s.team = team; s.isCore = core; s.radius = core ? 3.2f : 2.2f;
+        // The stone wears its health where the eye can judge it.
+        var tbar = go.AddComponent<OverheadBar>();
+        tbar.height = core ? 10.5f : 12.3f;
+        tbar.barScale = core ? 4.6f : 3.2f;
         if (!core)
         {
-            // A tower is not a bottle. Give it a silhouette: a wide base
-            // the wave can flow around, the shaft, a crown, and a jewel
-            // of its court's color burning at the peak. (Children inherit
-            // the shaft's stretch — each part's scale is divided back out.)
-            var bas = Prim(PrimitiveType.Cylinder, "TowerBase", go.transform,
-                new Vector3(x, 0.45f, z), new Vector3(3.4f, 0.9f, 3.4f), mat);
-            bas.transform.localScale = new Vector3(2f, 0.214f, 2f);
-            Object.DestroyImmediate(bas.GetComponent<Collider>());
-            var crown = Prim(PrimitiveType.Cylinder, "TowerCrown", go.transform,
-                new Vector3(x, 4.5f, z), new Vector3(2.9f, 0.8f, 2.9f), mat);
-            crown.transform.localScale = new Vector3(1.7f, 0.19f, 1.7f);
-            Object.DestroyImmediate(crown.GetComponent<Collider>());
-            var jewel = Prim(PrimitiveType.Sphere, "TowerJewel", go.transform,
-                new Vector3(x, 5.15f, z), new Vector3(0.9f, 0.9f, 0.9f), mat);
-            jewel.transform.localScale = new Vector3(0.53f, 0.214f, 0.53f);
-            Object.DestroyImmediate(jewel.GetComponent<Collider>());
+            // THE OBELISK — the maker's vision made stone: a tapered,
+            // glyph-carved shaft on a stepped pad, a collar of its
+            // court's color, and a burning blue crystal at the peak.
+            // The root cylinder is the tower's invisible body — it
+            // carries the collider and the laws; its renderer sleeps
+            // and the obelisk shows in its place. (Children inherit
+            // the root's 3.4 x 9.2 stretch — every part's world size
+            // is divided back out by INV.)
+            go.GetComponent<Renderer>().enabled = false;
+            Vector3 inv = new Vector3(1f / 3.4f, 1f / 9.2f, 1f / 3.4f);
+            var pad1 = Prim(PrimitiveType.Cube, "ObeliskPad", go.transform,
+                new Vector3(x, 0.25f, z), Vector3.one, mat);
+            pad1.transform.localScale = new Vector3(7.6f * inv.x, 0.5f * inv.y, 7.6f * inv.z);
+            Object.DestroyImmediate(pad1.GetComponent<Collider>());
+            var pad2 = Prim(PrimitiveType.Cube, "ObeliskPadTop", go.transform,
+                new Vector3(x, 0.75f, z), Vector3.one, mat);
+            pad2.transform.localScale = new Vector3(6.0f * inv.x, 0.5f * inv.y, 6.0f * inv.z);
+            Object.DestroyImmediate(pad2.GetComponent<Collider>());
+            var shaft = new GameObject("ObeliskShaft");
+            shaft.transform.SetParent(go.transform);
+            shaft.transform.position = new Vector3(x, 1.0f, z);
+            shaft.transform.localScale = inv;
+            shaft.AddComponent<MeshFilter>().mesh = ObeliskMesh(1.62f, 0.92f, 7.6f);
+            shaft.AddComponent<MeshRenderer>().material = ObeliskMaterial(mat);
+            var collar = Prim(PrimitiveType.Cube, "ObeliskCollar", go.transform,
+                new Vector3(x, 8.85f, z), Vector3.one, mat);
+            collar.transform.localScale = new Vector3(2.35f * inv.x, 0.5f * inv.y, 2.35f * inv.z);
+            Object.DestroyImmediate(collar.GetComponent<Collider>());
+            var plate = Prim(PrimitiveType.Cube, "ObeliskPlate", go.transform,
+                new Vector3(x, 9.25f, z), Vector3.one, mat);
+            plate.transform.localScale = new Vector3(2.6f * inv.x, 0.3f * inv.y, 2.6f * inv.z);
+            Object.DestroyImmediate(plate.GetComponent<Collider>());
+            CrystalCluster(go.transform, new Vector3(x, 10.15f, z), 1f, inv);
             // The tower's shield, made visible: a pale bubble over the stone.
             var sm = new Material(Shader.Find("Universal Render Pipeline/Lit"));
             sm.color = new Color(0.5f, 0.85f, 1f, 0.32f);
             sm.SetFloat("_Surface", 1f);
             sm.renderQueue = 3000;
             var bubble = Prim(PrimitiveType.Sphere, "TowerShield", go.transform,
-                new Vector3(x, 3.4f, z), Vector3.one * 6.4f, sm);
-            // The tower's shaft is stretched (1.7 x 4.2 x 1.7) — undo that
-            // stretch on the child so the shield is a round bubble, not an egg.
-            bubble.transform.localScale = new Vector3(3.76f, 1.52f, 3.76f);
+                new Vector3(x, 5.4f, z), Vector3.one, sm);
+            bubble.transform.localScale = new Vector3(8.0f * inv.x, 11.4f * inv.y, 8.0f * inv.z);
             Object.DestroyImmediate(bubble.GetComponent<Collider>());
         }
+    }
+
+    // The obelisk's body: a four-sided frustum rising to a pyramidion,
+    // each face carrying the carved-glyph texture whole.
+    static Mesh ObeliskMesh(float b, float t, float h)
+    {
+        var cs = new[] { new Vector2(1, 1), new Vector2(-1, 1), new Vector2(-1, -1), new Vector2(1, -1) };
+        var verts = new System.Collections.Generic.List<Vector3>();
+        var uvs = new System.Collections.Generic.List<Vector2>();
+        var tris = new System.Collections.Generic.List<int>();
+        for (int i = 0; i < 4; i++)
+        {
+            var c0 = cs[i]; var c1 = cs[(i + 1) % 4];
+            int s0 = verts.Count;
+            verts.Add(new Vector3(c0.x * b, 0, c0.y * b));
+            verts.Add(new Vector3(c1.x * b, 0, c1.y * b));
+            verts.Add(new Vector3(c1.x * t, h, c1.y * t));
+            verts.Add(new Vector3(c0.x * t, h, c0.y * t));
+            uvs.Add(new Vector2(0, 0)); uvs.Add(new Vector2(1, 0));
+            uvs.Add(new Vector2(1, 1)); uvs.Add(new Vector2(0, 1));
+            tris.AddRange(new[] { s0, s0 + 1, s0 + 2, s0, s0 + 2, s0 + 3 });
+            int p0 = verts.Count;
+            verts.Add(new Vector3(c0.x * t, h, c0.y * t));
+            verts.Add(new Vector3(c1.x * t, h, c1.y * t));
+            verts.Add(new Vector3(0, h + 0.85f, 0));
+            uvs.Add(new Vector2(0, 1)); uvs.Add(new Vector2(1, 1)); uvs.Add(new Vector2(0.5f, 1.12f));
+            tris.AddRange(new[] { p0, p0 + 1, p0 + 2 });
+        }
+        var m = new Mesh();
+        m.SetVertices(verts); m.SetUVs(0, uvs); m.SetTriangles(tris, 0);
+        m.RecalculateNormals(); m.RecalculateBounds();
+        return m;
+    }
+
+    // A single crystal shard: an elongated octahedron.
+    static Mesh CrystalMesh(float len, float rad)
+    {
+        float up = len * 0.62f, dn = len * 0.38f;
+        var verts = new Vector3[]
+        {
+            new Vector3(0, up, 0), new Vector3(rad, 0, 0), new Vector3(0, 0, rad),
+            new Vector3(-rad, 0, 0), new Vector3(0, 0, -rad), new Vector3(0, -dn, 0)
+        };
+        var tris = new int[]
+        {
+            0, 1, 2,  0, 2, 3,  0, 3, 4,  0, 4, 1,
+            5, 2, 1,  5, 3, 2,  5, 4, 3,  5, 1, 4
+        };
+        var m = new Mesh();
+        m.vertices = verts; m.triangles = tris;
+        m.RecalculateNormals(); m.RecalculateBounds();
+        return m;
+    }
+
+    static Material CrystalMaterial()
+    {
+        string path = "Assets/Materials/ArenaCrystal.mat";
+        var m = AssetDatabase.LoadAssetAtPath<Material>(path);
+        if (m == null)
+        {
+            var shader = Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard");
+            m = new Material(shader);
+            AssetDatabase.CreateAsset(m, path);
+        }
+        m.color = new Color(0.10f, 0.25f, 0.85f);
+        m.SetColor("_EmissionColor", new Color(0.35f, 0.8f, 2.6f));
+        m.EnableKeyword("_EMISSION");
+        m.SetFloat("_Smoothness", 0.55f);
+        EditorUtility.SetDirty(m);
+        return m;
+    }
+
+    static Material ObeliskMaterial(Material fallback)
+    {
+        string texPath = "Assets/Materials/ObeliskTex.png";
+        var tex = AssetDatabase.LoadAssetAtPath<Texture2D>(texPath);
+        if (tex == null) return fallback;
+        var imp = AssetImporter.GetAtPath(texPath) as TextureImporter;
+        if (imp != null && imp.wrapMode != TextureWrapMode.Repeat)
+        {
+            imp.wrapMode = TextureWrapMode.Repeat;
+            imp.SaveAndReimport();
+            tex = AssetDatabase.LoadAssetAtPath<Texture2D>(texPath);
+        }
+        string path = "Assets/Materials/ArenaObelisk.mat";
+        var m = AssetDatabase.LoadAssetAtPath<Material>(path);
+        if (m == null)
+        {
+            var shader = Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard");
+            m = new Material(shader);
+            AssetDatabase.CreateAsset(m, path);
+        }
+        m.SetTexture("_BaseMap", tex);
+        m.color = Color.white;
+        EditorUtility.SetDirty(m);
+        return m;
+    }
+
+    static void CrystalShard(Transform parent, string name, Vector3 pos,
+        float len, float rad, Material cm, Vector3 inv)
+    {
+        var g = new GameObject(name);
+        g.transform.SetParent(parent);
+        g.transform.position = pos;
+        g.transform.localScale = inv;
+        g.AddComponent<MeshFilter>().mesh = CrystalMesh(len, rad);
+        g.AddComponent<MeshRenderer>().material = cm;
+    }
+
+    // The burning crown of the Vision: three blue shards, the heart
+    // tall, two lesser flames at its feet.
+    static void CrystalCluster(Transform parent, Vector3 pos, float scale, Vector3 inv)
+    {
+        var cm = CrystalMaterial();
+        CrystalShard(parent, "CrystalMain", pos, 3.1f * scale, 0.62f * scale, cm, inv);
+        CrystalShard(parent, "CrystalLeft",
+            pos + new Vector3(-0.78f * scale, -0.55f * scale, 0.18f * scale),
+            1.9f * scale, 0.42f * scale, cm, inv);
+        CrystalShard(parent, "CrystalRight",
+            pos + new Vector3(0.74f * scale, -0.62f * scale, -0.2f * scale),
+            1.7f * scale, 0.38f * scale, cm, inv);
     }
 
     // THE MOVIE FILTER — the single step that makes flat shapes look
