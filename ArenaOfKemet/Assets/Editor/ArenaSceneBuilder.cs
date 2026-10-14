@@ -2,6 +2,8 @@
 using UnityEngine;
 using UnityEditor;
 using UnityEditor.SceneManagement;
+using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
 
 // One-click map builder: menu Arena -> Build 3-Lane Map.
 // Raises the whole Honor-of-Kings-style field — three lanes, river, jungle,
@@ -141,6 +143,8 @@ public static class ArenaSceneBuilder
             if (cam.GetComponent<FollowCamera>() == null)
                 cam.gameObject.AddComponent<FollowCamera>();
         }
+        BuildPostFX();
+        DressSun();
 
         // The jungle fills the pockets between the roads: trees, brush, rocks.
         // Spots are rejected on roads, in the river, and at the homes/camps.
@@ -601,6 +605,67 @@ public static class ArenaSceneBuilder
             // stretch on the child so the shield is a round bubble, not an egg.
             bubble.transform.localScale = new Vector3(3.76f, 1.52f, 3.76f);
             Object.DestroyImmediate(bubble.GetComponent<Collider>());
+        }
+    }
+
+    // THE MOVIE FILTER — the single step that makes flat shapes look
+    // ALIVE: a global post-processing volume in the render pipeline's
+    // own tongue (URP Volume, not the retired v2 stack): ACES filmic
+    // tone, deeper color, and bloom so every emissive light in the
+    // arena — trails, jewels, flashes, the river's gleam — bleeds
+    // softly into the lens, the way his games glow.
+    static void BuildPostFX()
+    {
+        var oldFx = GameObject.Find("PostFX");
+        if (oldFx != null) Object.DestroyImmediate(oldFx);
+
+        const string fxPath = "Assets/ArenaPostFX.asset";
+        var profile = AssetDatabase.LoadAssetAtPath<VolumeProfile>(fxPath);
+        if (profile == null)
+        {
+            profile = ScriptableObject.CreateInstance<VolumeProfile>();
+            AssetDatabase.CreateAsset(profile, fxPath);
+        }
+
+        if (!profile.TryGet<Tonemapping>(out var tone)) tone = profile.Add<Tonemapping>(true);
+        tone.mode.value = TonemappingMode.ACES;
+
+        if (!profile.TryGet<ColorAdjustments>(out var grade)) grade = profile.Add<ColorAdjustments>(true);
+        grade.saturation.value = 14f;
+        grade.contrast.value = 10f;
+        grade.colorFilter.value = new Color(1.03f, 1.0f, 0.95f);
+
+        if (!profile.TryGet<Bloom>(out var bloom)) bloom = profile.Add<Bloom>(true);
+        bloom.intensity.value = 0.35f;
+        bloom.threshold.value = 0.8f;
+        bloom.scatter.value = 0.6f;
+
+        if (!profile.TryGet<Vignette>(out var vig)) vig = profile.Add<Vignette>(true);
+        vig.intensity.value = 0.24f;
+        vig.smoothness.value = 0.5f;
+
+        EditorUtility.SetDirty(profile);
+
+        var fx = new GameObject("PostFX");
+        var vol = fx.AddComponent<Volume>();
+        vol.isGlobal = true;
+        vol.priority = 10f;
+        vol.sharedProfile = profile;
+    }
+
+    // The sun dressed for war: warm late light, soft shadows with
+    // strength enough to ANCHOR every body to the earth.
+    static void DressSun()
+    {
+        foreach (var l in Object.FindObjectsByType<Light>())
+        {
+            if (l.type != LightType.Directional) continue;
+            l.intensity = 1.2f;
+            l.color = new Color(1f, 0.93f, 0.8f);
+            l.shadows = LightShadows.Soft;
+            l.shadowStrength = 0.85f;
+            l.shadowBias = 0.04f;
+            l.shadowNormalBias = 0.4f;
         }
     }
 }

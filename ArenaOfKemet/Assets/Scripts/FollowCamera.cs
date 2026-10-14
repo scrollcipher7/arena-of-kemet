@@ -18,6 +18,10 @@ public class FollowCamera : MonoBehaviour
         // stretching, and the angle the maker approved does not move.
         var cam = GetComponent<Camera>();
         if (cam != null) cam.fieldOfView = 50f;
+        // Open the lens to the movie filter (the builder's PostFX
+        // volume): without this switch the grade never reaches the eye.
+        var data = GetComponent<UnityEngine.Rendering.Universal.UniversalAdditionalCameraData>();
+        if (data != null) data.renderPostProcessing = true;
     }
 
     // Forget the old god — the rider follows whoever the player chose
