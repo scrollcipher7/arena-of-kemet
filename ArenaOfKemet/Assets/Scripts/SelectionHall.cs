@@ -90,9 +90,9 @@ public class SelectionHall : MonoBehaviour
         {
             int col = i % 5, row = i / 5;
             float x = (col - 2) * 304f;
-            float y = row == 0 ? -292f : -616f;
+            float y = row == 0 ? -284f : -598f;
             var cell = Panel(root, "Cell_" + Gods[i], new Color(0.06f, 0.06f, 0.09f, 1f), false);
-            Place(cell.GetComponent<RectTransform>(), new Vector2(0.5f, 1), new Vector2(x, y), new Vector2(280, 300));
+            Place(cell.GetComponent<RectTransform>(), new Vector2(0.5f, 1), new Vector2(x, y), new Vector2(280, 290));
 
             var ring = Panel(cell.transform, "Ring", gold, false);
             var rrt = ring.GetComponent<RectTransform>();
@@ -135,21 +135,21 @@ public class SelectionHall : MonoBehaviour
 
         // The court: two banners. The god's origin does not choose for him.
         var kGo = Panel(root, "CourtKemet", new Color(0.2f, 0.16f, 0.05f, 1f), false);
-        Place(kGo.GetComponent<RectTransform>(), new Vector2(0.5f, 1), new Vector2(-205, -806), new Vector2(380, 48));
+        Place(kGo.GetComponent<RectTransform>(), new Vector2(0.5f, 1), new Vector2(-205, -778), new Vector2(380, 46));
         kemetBtnText = Txt(kGo.transform, "FIGHT FOR KEMET", 19, Color.white, TextAnchor.MiddleCenter);
         Stretch(kemetBtnText.rectTransform);
         kemetBtn = kGo.AddComponent<Button>();
         kemetBtn.onClick.AddListener(() => { court = Team.Kemet; RefreshSelection(); });
 
         var oGo = Panel(root, "CourtOlympus", new Color(0.1f, 0.13f, 0.18f, 1f), false);
-        Place(oGo.GetComponent<RectTransform>(), new Vector2(0.5f, 1), new Vector2(205, -806), new Vector2(380, 48));
+        Place(oGo.GetComponent<RectTransform>(), new Vector2(0.5f, 1), new Vector2(205, -778), new Vector2(380, 46));
         olyBtnText = Txt(oGo.transform, "FIGHT FOR OLYMPUS", 19, Color.white, TextAnchor.MiddleCenter);
         Stretch(olyBtnText.rectTransform);
         olyBtn = oGo.AddComponent<Button>();
         olyBtn.onClick.AddListener(() => { court = Team.Olympus; RefreshSelection(); });
 
         var war = Panel(root, "ToWar", new Color(0.35f, 0.27f, 0.08f, 1f), false);
-        Place(war.GetComponent<RectTransform>(), new Vector2(0.5f, 1), new Vector2(0, -866), new Vector2(380, 56));
+        Place(war.GetComponent<RectTransform>(), new Vector2(0.5f, 1), new Vector2(0, -838), new Vector2(380, 52));
         var warText = Txt(war.transform, "TO WAR", 26, Color.white, TextAnchor.MiddleCenter);
         Stretch(warText.rectTransform);
         war.AddComponent<Button>().onClick.AddListener(Confirm);
