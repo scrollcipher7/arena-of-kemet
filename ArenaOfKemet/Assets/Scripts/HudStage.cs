@@ -17,6 +17,7 @@ public class HudStage : MonoBehaviour
     Text portraitLetter;
     Text portraitName;
     bool portraitSet = false;
+    readonly Text[] capTexts = new Text[4];
 
     void Awake()
     {
@@ -102,6 +103,7 @@ public class HudStage : MonoBehaviour
             cdImg.raycastTarget = false;
             // Under each tile, the power's NAME — not the letter twice.
             var cap = Txt(bt, "Cap" + keys[i], powerNames[i], 10, Color.white, TextAnchor.MiddleCenter);
+            capTexts[i] = cap;
             Place(cap.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(x, -27), new Vector2(66, 16));
         }
 
@@ -145,6 +147,14 @@ public class HudStage : MonoBehaviour
     public void ResetPortrait()
     {
         portraitSet = false;
+        // The tiles must speak the CHOSEN god's tongue.
+        var gm = GameManager.Instance;
+        if (gm != null && gm.playerHero != null)
+        {
+            var names = Hero.KitNames(gm.playerHero.heroName);
+            for (int i = 0; i < 4; i++)
+                if (capTexts[i] != null) capTexts[i].text = names[i];
+        }
     }
 
     void Update()

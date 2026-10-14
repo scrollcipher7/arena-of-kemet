@@ -303,46 +303,203 @@ public class Hero : Unit
 
     Transform BestAbilityTarget(float range) { return Combat.FindNearestEnemy(transform.position, team, range); }
 
+    // ── THE GOD-GIVEN KITS ─────────────────────────────────────────
+    // Every god fights with HIS OWN hands now. The gates (cooldown,
+    // mana, level) are one law for all; what happens past the gate is
+    // the god's alone. The AI casts through these same doors.
+
+    public static string[] KitNames(string god)
+    {
+        switch (god)
+        {
+            case "THOTH": return new[] { "STEP", "BOLT", "WARD", "THE WORD" };
+            case "SEKHMET": return new[] { "POUNCE", "ROAR", "FRENZY", "PLAGUE" };
+            case "ANUBIS": return new[] { "SHADOW", "WEIGHING", "MIST", "JUDGMENT" };
+            case "ISIS": return new[] { "GLIDE", "WINGS", "EMBRACE", "REBIRTH" };
+            case "ARES": return new[] { "CHARGE", "RUIN", "BLOOD", "WRATH" };
+            case "ARTEMIS": return new[] { "ROLL", "MOON", "SNARE", "VOLLEY" };
+            case "ZEUS": return new[] { "STORM", "BOLT", "AEGIS", "WRATH" };
+            case "HADES": return new[] { "STYX", "REND", "SHROUD", "KINGDOM" };
+            case "ATHENA": return new[] { "DASH", "SPEAR", "AEGIS", "PHALANX" };
+            default: return new[] { "DASH", "FALCON", "SHIELD", "FLOOD" };
+        }
+    }
+
+    Color CourtColor()
+    {
+        return team == Team.Kemet ? new Color(1f, 0.8f, 0.3f) : new Color(0.6f, 0.79f, 0.98f);
+    }
+
+    void DashForward(float dist, float dmg)
+    {
+        Vector3 dir = transform.forward;
+        dir.y = 0;
+        if (dir.sqrMagnitude < 0.01f) dir = team == Team.Kemet ? Vector3.right : Vector3.left;
+        dir.Normalize();
+        Vector3 from = transform.position;
+        Vector3 to = from + dir * dist;
+        to.x = Mathf.Clamp(to.x, -56.5f, 56.5f);
+        to.z = Mathf.Clamp(to.z, -56.5f, 56.5f);
+        to.y = from.y;
+        transform.position = to;
+        transform.rotation = Quaternion.LookRotation(dir);
+        if (dmg > 0f)
+        {
+            foreach (Vector3 c in new[] { (from + to) / 2f, to })
+            {
+                var hits = Physics.OverlapSphere(c, 2.6f);
+                foreach (var h in hits)
+                {
+                    var hp = h.GetComponent<Health>();
+                    var su = h.GetComponent<Unit>();
+                    var ss = h.GetComponent<Structure>();
+                    Team? t = null;
+                    if (su != null) t = su.team;
+                    else if (ss != null) t = ss.team;
+                    if (hp != null && t.HasValue && t.Value != team) hp.TakeDamage(dmg, gameObject);
+                }
+            }
+        }
+        HitFlash.Spawn(to + Vector3.up * 1.1f, CourtColor(), 1.4f, 0.2f);
+    }
+
+    bool PowerShot(float dmg, bool pierce, float slowSec, float range, bool heavy)
+    {
+        var t = BestAbilityTarget(range);
+        if (t == null) return false;
+        Combat.SpawnProjectile(transform.position + Vector3.up * 2.2f, t, dmg,
+            gameObject, team, heavy, slowSec, 1f, pierce);
+        return true;
+    }
+
+    void RingBurst(float dmg, float radius, float slowSec, float slowPct)
+    {
+        var hits = Physics.OverlapSphere(transform.position, radius);
+        foreach (var h in hits)
+        {
+            var u = h.GetComponent<Unit>();
+            if (u == null || u.team == team || !u.IsAlive) continue;
+            u.health.TakeDamage(dmg, gameObject);
+            if (slowSec > 0f) { u.slowT = Mathf.Max(u.slowT, slowSec); u.slowPct = slowPct; }
+        }
+        HitFlash.Spawn(transform.position + Vector3.up * 1f, CourtColor(), radius * 0.55f, 0.35f);
+    }
+
+    void ShieldOn(Hero h, float amt)
+    {
+        if (h == null) return;
+        h.health.shield = amt;
+        h.shieldT = 5f;
+    }
+
+    Hero NearestAllyHero(float range, bool includeSelf)
+    {
+        Hero bestH = null;
+        float bd = range;
+        foreach (var h in FindObjectsByType<Hero>())
+        {
+            if (h.team != team || !h.IsAlive) continue;
+            if (h == this && !includeSelf) continue;
+            float d = Vector3.Distance(transform.position, h.transform.position);
+            if (d < bd) { bd = d; bestH = h; }
+        }
+        return bestH;
+    }
+
+    System.Collections.Generic.List<Hero> EnemyHeroesIn(float range)
+    {
+        var list = new System.Collections.Generic.List<Hero>();
+        foreach (var h in FindObjectsByType<Hero>())
+        {
+            if (h.team == team || !h.IsAlive) continue;
+            if (Vector3.Distance(transform.position, h.transform.position) <= range) list.Add(h);
+        }
+        list.Sort((a, b) => Vector3.Distance(transform.position, a.transform.position)
+            .CompareTo(Vector3.Distance(transform.position, b.transform.position)));
+        return list;
+    }
+
     public void CastQ()
     {
         if (cd[0] > 0 || mp < mpCost[0] || !IsAlive) return;
         mp -= mpCost[0];
         cd[0] = cdMax[0];
-        Vector3 dir = Vector3.right;
-        if (team != Team.Kemet) dir = Vector3.left;
-        dir.y = 0;
-        dir.Normalize();
-        Vector3 from = transform.position;
-        Vector3 to = from + dir * 6.5f;
-        to.x = Mathf.Clamp(to.x, -35f, 35f);
-        to.z = Mathf.Clamp(to.z, -11.5f, 11.5f);
-        to.y = 0;
-        transform.position = to;
-        transform.rotation = Quaternion.LookRotation(dir);
-        foreach (Vector3 c in new[] { (from + to) / 2f, to })
+        switch (heroName)
         {
-            var hits = Physics.OverlapSphere(c, 2.6f);
-            foreach (var h in hits)
-            {
-                var hp = h.GetComponent<Health>();
-                var su = h.GetComponent<Unit>();
-                var ss = h.GetComponent<Structure>();
-                Team? t = null;
-                if (su != null) t = su.team;
-                else if (ss != null) t = ss.team;
-                if (hp != null && t.HasValue && t.Value != team) hp.TakeDamage(85f + level * 9f, gameObject);
-            }
+            case "SEKHMET": DashForward(9f, 95f + level * 10f); break;
+            case "ANUBIS": DashForward(8f, 0f); break;
+            case "HADES": DashForward(8f, 0f); break;
+            case "ATHENA":
+                DashForward(6.5f, 60f + level * 7f);
+                ShieldOn(this, 60f + level * 6f);
+                break;
+            case "THOTH": case "ZEUS": case "ISIS": case "ARTEMIS":
+                DashForward(6.5f, 0f); break;
+            default: DashForward(6.5f, 85f + level * 9f); break; // THE MEDJAY, ARES
         }
     }
 
     public void CastW()
     {
         if (cd[1] > 0 || mp < mpCost[1] || !IsAlive) return;
-        var t = BestAbilityTarget(13f);
-        if (t == null) return;
+        bool fired = true;
+        switch (heroName)
+        {
+            case "THOTH":
+                fired = PowerShot(150f + level * 16f, false, 0.8f, 14f, true); break;
+            case "SEKHMET":
+                RingBurst(90f + level * 10f, 6f, 0f, 0f);
+                health.Heal(health.maxHp * 0.05f); break;
+            case "ANUBIS": {
+                var t = BestAbilityTarget(14f);
+                if (t == null) { fired = false; break; }
+                float dmg = 120f + level * 14f;
+                var th = t.GetComponent<Hero>();
+                if (th != null && th.health.Frac < 0.4f) dmg *= 1.8f; // the heart is weighed
+                Combat.SpawnProjectile(transform.position + Vector3.up * 2.2f, t, dmg,
+                    gameObject, team, true, 0f);
+                break; }
+            case "ISIS": {
+                Hero ally = null;
+                float worst = 1f;
+                foreach (var h in FindObjectsByType<Hero>())
+                {
+                    if (h.team != team || !h.IsAlive) continue;
+                    if (Vector3.Distance(transform.position, h.transform.position) > 14f) continue;
+                    if (h.health.Frac < worst) { worst = h.health.Frac; ally = h; }
+                }
+                if (ally == null || worst >= 1f) { fired = false; break; }
+                ally.health.Heal(170f + level * 20f);
+                HitFlash.Spawn(ally.transform.position + Vector3.up * 1.4f,
+                    new Color(0.45f, 0.95f, 0.6f), 1.8f, 0.3f);
+                break; }
+            case "ARES":
+                fired = PowerShot(135f + level * 15f, true, 0f, 14f, false); break;
+            case "ARTEMIS":
+                fired = PowerShot(145f + level * 16f, true, 0f, 18f, false); break;
+            case "ZEUS":
+                fired = PowerShot(165f + level * 18f, false, 0f, 14f, true); break;
+            case "HADES": {
+                var foes = EnemyHeroesIn(13f);
+                Transform t = foes.Count > 0 ? foes[0].transform : BestAbilityTarget(13f);
+                if (t == null) { fired = false; break; }
+                float dmg = 125f + level * 14f;
+                t.GetComponent<Health>().TakeDamage(dmg, gameObject);
+                health.Heal(dmg * 0.6f);
+                HitFlash.Spawn(t.position + Vector3.up * 1.2f, new Color(0.62f, 0.45f, 0.95f), 1.6f, 0.25f);
+                break; }
+            case "ATHENA":
+                fired = PowerShot(120f + level * 14f, true, 0f, 14f, false); break;
+            default: { // THE MEDJAY — the Falcon, unchanged law
+                var t = BestAbilityTarget(13f);
+                if (t == null) { fired = false; break; }
+                Combat.SpawnProjectile(transform.position + Vector3.up * 2.2f, t,
+                    110f + level * 13f, gameObject, team, true, 1.6f);
+                break; }
+        }
+        if (!fired) return;
         mp -= mpCost[1];
         cd[1] = cdMax[1];
-        Combat.SpawnProjectile(transform.position + Vector3.up * 2.2f, t, 110f + level * 13f, gameObject, team, true, 1.6f);
     }
 
     public void CastE()
@@ -350,15 +507,110 @@ public class Hero : Unit
         if (cd[2] > 0 || mp < mpCost[2] || !IsAlive) return;
         mp -= mpCost[2];
         cd[2] = cdMax[2];
-        health.shield = 130f + level * 18f;
-        shieldT = 5f;
+        switch (heroName)
+        {
+            case "THOTH":
+                ShieldOn(this, 120f + level * 15f);
+                mp = Mathf.Min(maxMp, mp + maxMp * 0.4f); break;
+            case "SEKHMET":
+                health.Heal(health.maxHp * 0.16f);
+                ShieldOn(this, 70f + level * 8f); break;
+            case "ANUBIS":
+                ShieldOn(this, 175f + level * 20f); break;
+            case "ISIS": {
+                var ally = NearestAllyHero(12f, true);
+                ShieldOn(ally != null ? ally : this, 150f + level * 20f); break; }
+            case "ARES":
+                ShieldOn(this, 120f + level * 15f);
+                health.Heal(health.maxHp * 0.07f); break;
+            case "ARTEMIS":
+                RingBurst(40f + level * 5f, 6.5f, 2.2f, 0.5f); break;
+            case "ZEUS":
+                ShieldOn(this, 145f + level * 17f);
+                mp = Mathf.Min(maxMp, mp + maxMp * 0.3f); break;
+            case "HADES":
+                ShieldOn(this, 165f + level * 19f); break;
+            case "ATHENA": {
+                var ally = NearestAllyHero(12f, true);
+                ShieldOn(ally != null ? ally : this, 175f + level * 22f); break; }
+            default:
+                ShieldOn(this, 130f + level * 18f); break; // Shield of Ma'at
+        }
     }
 
     public void CastR()
     {
         if (level < 6 || cd[3] > 0 || mp < mpCost[3] || !IsAlive) return;
+        bool fired = true;
+        switch (heroName)
+        {
+            case "THOTH":
+                RingBurst(240f + level * 30f, 9.5f, 1.2f, 0.45f);
+                GameManager.Instance.Announce("THE WRITTEN WORD", "Thoth has read your ending aloud."); break;
+            case "SEKHMET":
+                RingBurst(300f + level * 38f, 11f, 0f, 0f);
+                GameManager.Instance.Announce("THE PLAGUE YEAR", "Sekhmet walks — and the field sickens."); break;
+            case "ANUBIS": {
+                var foes = EnemyHeroesIn(20f);
+                if (foes.Count == 0) { fired = false; break; }
+                Combat.SpawnProjectile(transform.position + Vector3.up * 2.2f, foes[0].transform,
+                    400f + level * 48f, gameObject, team, true, 0f);
+                GameManager.Instance.Announce("JUDGMENT OF THE DEAD", "Anubis has weighed a heart — and found it light."); break; }
+            case "ISIS": {
+                foreach (var h in FindObjectsByType<Hero>())
+                {
+                    if (h.team != team || !h.IsAlive) continue;
+                    if (Vector3.Distance(transform.position, h.transform.position) > 12f) continue;
+                    h.health.Heal(230f + level * 28f);
+                    h.slowT = 0f;
+                    HitFlash.Spawn(h.transform.position + Vector3.up * 1.4f,
+                        new Color(0.45f, 0.95f, 0.6f), 2f, 0.35f);
+                }
+                GameManager.Instance.Announce("RESURRECTION WIND", "Isis breathes — and her court rises."); break; }
+            case "ARTEMIS": {
+                var t = BestAbilityTarget(16f);
+                if (t == null) { fired = false; break; }
+                for (int i = 0; i < 3; i++)
+                {
+                    var tt = Combat.FindNearestEnemy(transform.position, team, 16f);
+                    Combat.SpawnProjectile(transform.position + Vector3.up * (2.2f + i * 0.35f),
+                        tt != null ? tt : t, 135f + level * 15f, gameObject, team, false, 0f);
+                }
+                GameManager.Instance.Announce("VOLLEY OF THE HUNT", "The moon rains arrows."); break; }
+            case "ZEUS": {
+                var foes = EnemyHeroesIn(14f);
+                if (foes.Count == 0) { fired = false; break; }
+                for (int i = 0; i < foes.Count && i < 3; i++)
+                {
+                    foes[i].health.TakeDamage(235f + level * 29f, gameObject);
+                    HitFlash.Spawn(foes[i].transform.position + Vector3.up * 1.6f,
+                        new Color(0.75f, 0.85f, 1f), 2f, 0.3f);
+                }
+                GameManager.Instance.Announce("WRATH OF OLYMPUS", "The sky keeps its promises."); break; }
+            case "HADES":
+                RingBurst(265f + level * 33f, 10f, 1.5f, 0.5f);
+                GameManager.Instance.Announce("KINGDOM COME", "Hades opens his gates — inward."); break;
+            case "ATHENA": {
+                foreach (var h in FindObjectsByType<Hero>())
+                {
+                    if (h.team != team || !h.IsAlive) continue;
+                    if (Vector3.Distance(transform.position, h.transform.position) > 11f) continue;
+                    ShieldOn(h, 185f + level * 23f);
+                    h.health.Heal(95f + level * 11f);
+                }
+                GameManager.Instance.Announce("THE PHALANX STANDS", "Athena's wall has no gate."); break; }
+            default:
+                CastWaveUlt(); break; // THE MEDJAY's Flood, ARES' Wrath
+        }
+        if (!fired) return;
         mp -= mpCost[3];
         cd[3] = cdMax[3];
+    }
+
+    // The two wave-ults, born of the first build — the Medjay's Flood
+    // and Ares' Wrath share one rolling wall of doom.
+    void CastWaveUlt()
+    {
         string objName = "WarWave";
         Color col = new Color(0.9f, 0.35f, 0.2f);
         string title = "THE WRATH OF ARES";
