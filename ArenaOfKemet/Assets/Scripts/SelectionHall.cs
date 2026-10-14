@@ -71,7 +71,7 @@ public class SelectionHall : MonoBehaviour
         canvas.sortingOrder = 80;
         var scaler = canvasGo.AddComponent<CanvasScaler>();
         scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-        scaler.referenceResolution = new Vector2(1280, 720);
+        scaler.referenceResolution = new Vector2(1600, 900);
         scaler.matchWidthOrHeight = 0.5f;
         canvasGo.AddComponent<GraphicRaycaster>();
         var root = canvasGo.transform;
@@ -79,25 +79,25 @@ public class SelectionHall : MonoBehaviour
 
         Panel(root, "Veil", new Color(0.01f, 0.01f, 0.02f, 1f), true);
 
-        var title = Txt(root, "CHOOSE YOUR GOD", 44, gold, TextAnchor.MiddleCenter);
-        Place(title.rectTransform, new Vector2(0.5f, 1), new Vector2(0, -46), new Vector2(900, 54));
-        var sub = Txt(root, "One pool. No chains. Any god — either court.", 17,
+        var title = Txt(root, "CHOOSE YOUR GOD", 54, gold, TextAnchor.MiddleCenter);
+        Place(title.rectTransform, new Vector2(0.5f, 1), new Vector2(0, -58), new Vector2(1100, 66));
+        var sub = Txt(root, "One pool. No chains. Any god — either court.", 20,
             new Color(0.85f, 0.83f, 0.78f), TextAnchor.MiddleCenter);
-        Place(sub.rectTransform, new Vector2(0.5f, 1), new Vector2(0, -84), new Vector2(900, 26));
+        Place(sub.rectTransform, new Vector2(0.5f, 1), new Vector2(0, -106), new Vector2(1100, 30));
 
         rings = new Image[Gods.Length];
         for (int i = 0; i < Gods.Length; i++)
         {
             int col = i % 5, row = i / 5;
-            float x = (col - 2) * 172f;
-            float y = -218 - row * 216f;
+            float x = (col - 2) * 304f;
+            float y = row == 0 ? -292f : -616f;
             var cell = Panel(root, "Cell_" + Gods[i], new Color(0.06f, 0.06f, 0.09f, 1f), false);
-            Place(cell.GetComponent<RectTransform>(), new Vector2(0.5f, 1), new Vector2(x, y), new Vector2(156, 202));
+            Place(cell.GetComponent<RectTransform>(), new Vector2(0.5f, 1), new Vector2(x, y), new Vector2(280, 300));
 
             var ring = Panel(cell.transform, "Ring", gold, false);
             var rrt = ring.GetComponent<RectTransform>();
             rrt.anchorMin = Vector2.zero; rrt.anchorMax = Vector2.one;
-            rrt.offsetMin = new Vector2(-4, -4); rrt.offsetMax = new Vector2(4, 4);
+            rrt.offsetMin = new Vector2(-6, -6); rrt.offsetMax = new Vector2(6, 6);
             ring.transform.SetAsFirstSibling();
             rings[i] = ring.GetComponent<Image>();
 
@@ -107,20 +107,27 @@ public class SelectionHall : MonoBehaviour
                 var pic = new GameObject("Face");
                 pic.transform.SetParent(cell.transform, false);
                 var prt = pic.AddComponent<RectTransform>();
-                Place(prt, new Vector2(0.5f, 1), new Vector2(0, -6), new Vector2(144, 144));
+                Stretch(prt);
                 var img = pic.AddComponent<Image>();
                 img.sprite = Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(0.5f, 0.5f));
+                img.preserveAspect = false;
                 img.raycastTarget = false;
             }
             else
             {
-                var letter = Txt(cell.transform, Gods[i].Substring(0, 1), 52, gold, TextAnchor.MiddleCenter);
-                Place(letter.rectTransform, new Vector2(0.5f, 1), new Vector2(0, -6), new Vector2(144, 144));
+                var letter = Txt(cell.transform, Gods[i].Substring(0, 1), 90, gold, TextAnchor.MiddleCenter);
+                Stretch(letter.rectTransform);
             }
-            var nm = Txt(cell.transform, GodNames[i], 16, Color.white, TextAnchor.MiddleCenter);
-            Place(nm.rectTransform, new Vector2(0.5f, 1), new Vector2(0, -156), new Vector2(152, 22));
-            var rl = Txt(cell.transform, GodRoles[i], 11, gold, TextAnchor.MiddleCenter);
-            Place(rl.rectTransform, new Vector2(0.5f, 1), new Vector2(0, -180), new Vector2(152, 16));
+            var strip = Panel(cell.transform, "NameStrip", new Color(0.02f, 0.02f, 0.03f, 0.88f), false);
+            var srt = strip.GetComponent<RectTransform>();
+            srt.anchorMin = new Vector2(0, 0); srt.anchorMax = new Vector2(1, 0);
+            srt.pivot = new Vector2(0.5f, 0);
+            srt.offsetMin = new Vector2(0, 0); srt.offsetMax = new Vector2(0, 64);
+            strip.GetComponent<Image>().raycastTarget = false;
+            var nm = Txt(strip.transform, GodNames[i], 22, Color.white, TextAnchor.MiddleCenter);
+            Place(nm.rectTransform, new Vector2(0.5f, 1), new Vector2(0, -4), new Vector2(272, 28));
+            var rl = Txt(strip.transform, GodRoles[i], 14, gold, TextAnchor.MiddleCenter);
+            Place(rl.rectTransform, new Vector2(0.5f, 1), new Vector2(0, -34), new Vector2(272, 20));
 
             int idx = i;
             cell.AddComponent<Button>().onClick.AddListener(() => { pick = idx; RefreshSelection(); });
@@ -128,22 +135,22 @@ public class SelectionHall : MonoBehaviour
 
         // The court: two banners. The god's origin does not choose for him.
         var kGo = Panel(root, "CourtKemet", new Color(0.2f, 0.16f, 0.05f, 1f), false);
-        Place(kGo.GetComponent<RectTransform>(), new Vector2(0.5f, 1), new Vector2(-160, -580), new Vector2(300, 44));
-        kemetBtnText = Txt(kGo.transform, "FIGHT FOR KEMET", 16, Color.white, TextAnchor.MiddleCenter);
+        Place(kGo.GetComponent<RectTransform>(), new Vector2(0.5f, 1), new Vector2(-205, -806), new Vector2(380, 48));
+        kemetBtnText = Txt(kGo.transform, "FIGHT FOR KEMET", 19, Color.white, TextAnchor.MiddleCenter);
         Stretch(kemetBtnText.rectTransform);
         kemetBtn = kGo.AddComponent<Button>();
         kemetBtn.onClick.AddListener(() => { court = Team.Kemet; RefreshSelection(); });
 
         var oGo = Panel(root, "CourtOlympus", new Color(0.1f, 0.13f, 0.18f, 1f), false);
-        Place(oGo.GetComponent<RectTransform>(), new Vector2(0.5f, 1), new Vector2(160, -580), new Vector2(300, 44));
-        olyBtnText = Txt(oGo.transform, "FIGHT FOR OLYMPUS", 16, Color.white, TextAnchor.MiddleCenter);
+        Place(oGo.GetComponent<RectTransform>(), new Vector2(0.5f, 1), new Vector2(205, -806), new Vector2(380, 48));
+        olyBtnText = Txt(oGo.transform, "FIGHT FOR OLYMPUS", 19, Color.white, TextAnchor.MiddleCenter);
         Stretch(olyBtnText.rectTransform);
         olyBtn = oGo.AddComponent<Button>();
         olyBtn.onClick.AddListener(() => { court = Team.Olympus; RefreshSelection(); });
 
         var war = Panel(root, "ToWar", new Color(0.35f, 0.27f, 0.08f, 1f), false);
-        Place(war.GetComponent<RectTransform>(), new Vector2(0.5f, 1), new Vector2(0, -648), new Vector2(300, 52));
-        var warText = Txt(war.transform, "TO WAR", 22, Color.white, TextAnchor.MiddleCenter);
+        Place(war.GetComponent<RectTransform>(), new Vector2(0.5f, 1), new Vector2(0, -866), new Vector2(380, 56));
+        var warText = Txt(war.transform, "TO WAR", 26, Color.white, TextAnchor.MiddleCenter);
         Stretch(warText.rectTransform);
         war.AddComponent<Button>().onClick.AddListener(Confirm);
     }
