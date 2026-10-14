@@ -51,6 +51,9 @@ public class FogOfWar : MonoBehaviour
         var mr = go.AddComponent<MeshRenderer>();
         var m = new Material(Shader.Find("Universal Render Pipeline/Unlit"));
         m.SetFloat("_Surface", 1f);
+        m.SetFloat("_SrcBlend", (float)UnityEngine.Rendering.BlendMode.SrcAlpha);
+        m.SetFloat("_DstBlend", (float)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+        m.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
         m.SetFloat("_ZWrite", 0f);
         m.SetFloat("_Cull", 0f);
         m.renderQueue = 4000;
