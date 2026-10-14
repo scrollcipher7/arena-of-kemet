@@ -234,7 +234,7 @@ public class GameManager : MonoBehaviour
     }
 
     // Which road a structure stands on, by best fit to the paths.
-    static int LaneOf(Structure s)
+    public static int LaneOf(Structure s)
     {
         int best = 1; float bd = float.MaxValue;
         for (int li = 0; li < 3; li++)
@@ -245,7 +245,7 @@ public class GameManager : MonoBehaviour
         return best;
     }
 
-    // True when the enemy's INNER tower on this road has fallen — the law
+    // True when the enemy's GATE tower on this road has fallen — the law
     // that turns a wave's front fighter into a super minion.
     bool EnemyInnerDown(Team foe, int li)
     {
@@ -254,7 +254,7 @@ public class GameManager : MonoBehaviour
             if (s.team != foe || s.isCore) continue;
             if (LaneOf(s) != li) continue;
             float prog = PathProgress(li, s.transform.position, foe) / PathTotal(li);
-            if (prog > 0.20f && prog < 0.45f) return s.health.dead;
+            if (prog > 0.05f && prog < 0.20f) return s.health.dead;
         }
         return false;
     }
@@ -490,13 +490,13 @@ public class GameManager : MonoBehaviour
             EndGame(s.team == Team.Olympus);
             return;
         }
-        // High-ground law: when an INNER tower falls, the enemy wave
+        // High-ground law: when a GATE tower falls, the enemy wave
         // caught in its ground staggers — 75% slow for 3 seconds — so
         // the victors' wave clears the choke clean. (Super minions on
         // this road already rise by the EnemyInnerDown law.)
         int li = LaneOf(s);
         float prog = PathProgress(li, s.transform.position, s.team) / PathTotal(li);
-        if (prog > 0.20f && prog < 0.45f)
+        if (prog > 0.05f && prog < 0.20f)
         {
             foreach (var u in units)
                 if (u != null && u.team != s.team && u is Minion && u.IsAlive &&

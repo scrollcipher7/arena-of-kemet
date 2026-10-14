@@ -7,7 +7,7 @@ using UnityEngine.Rendering.Universal;
 
 // One-click map builder: menu Arena -> Build 3-Lane Map.
 // Raises the whole Honor-of-Kings-style field — three lanes, river, jungle,
-// 12 towers, 2 cores, both heroes, camera and the GameManager — in one press.
+// 18 towers (three deep on every road), 2 cores, both heroes, camera and the GameManager — in one press.
 public static class ArenaSceneBuilder
 {
     // (Lane geometry lives in GameManager.Lanes — the Gorge's three roads.)
@@ -69,16 +69,20 @@ public static class ArenaSceneBuilder
         Prim(PrimitiveType.Cube, "KemetBase", root, new Vector3(-50, 0.05f, -50), new Vector3(17, 0.1f, 17), goldKemet);
         Prim(PrimitiveType.Cube, "OlympusBase", root, new Vector3(50, 0.05f, 50), new Vector3(17, 0.1f, 17), stoneOly);
 
-        // Towers stand on the roads: outer at 58% of the march, inner at 30%.
+        // Towers stand THREE DEEP on every road, as in the maker's
+        // maps: Outer at 58% of the march, Inner at 30%, and the GATE
+        // at 14% — the last stone before the heart of the base.
         for (int i = 0; i < 3; i++)
         {
             var path = GameManager.Lanes[i];
-            Vector3 ko = PathPoint(path, 0.58f), ki = PathPoint(path, 0.30f);
-            Vector3 oo = PathPoint(path, 0.42f), oi = PathPoint(path, 0.70f);
+            Vector3 ko = PathPoint(path, 0.58f), ki = PathPoint(path, 0.30f), kg = PathPoint(path, 0.14f);
+            Vector3 oo = PathPoint(path, 0.42f), oi = PathPoint(path, 0.70f), og = PathPoint(path, 0.86f);
             BuildStructure(root, "KemetTower_" + laneName[i] + "_Outer", Team.Kemet, false, ko.x, ko.z, goldKemet);
             BuildStructure(root, "KemetTower_" + laneName[i] + "_Inner", Team.Kemet, false, ki.x, ki.z, goldKemet);
+            BuildStructure(root, "KemetTower_" + laneName[i] + "_Gate", Team.Kemet, false, kg.x, kg.z, goldKemet);
             BuildStructure(root, "OlympusTower_" + laneName[i] + "_Outer", Team.Olympus, false, oo.x, oo.z, stoneOly);
             BuildStructure(root, "OlympusTower_" + laneName[i] + "_Inner", Team.Olympus, false, oi.x, oi.z, stoneOly);
+            BuildStructure(root, "OlympusTower_" + laneName[i] + "_Gate", Team.Olympus, false, og.x, og.z, stoneOly);
         }
         BuildPyramidCore(root, "TempleCore", -50, -50, goldKemet);
         BuildGreekTempleCore(root, "ShrineCore", 50, 50, stoneOly);
@@ -197,10 +201,10 @@ public static class ArenaSceneBuilder
         int groundN = 0;
         foreach (Transform ch in root)
             if (ch.name == "Ground") groundN++;
-        bool pass = cores == 2 && coreDiag && towers == 12 && beastsN == 8
+        bool pass = cores == 2 && coreDiag && towers == 18 && beastsN == 8
             && heroesN == 10 && groundN == 1;
         string report = "cores " + cores + " (diagonal " + (coreDiag ? "OK" : "WRONG") + ")"
-            + ", towers " + towers + "/12, beasts " + beastsN + "/8"
+            + ", towers " + towers + "/18, beasts " + beastsN + "/8"
             + ", heroes " + heroesN + "/10, painted earth " + (groundN == 1 ? "whole" : "MISSING");
         Debug.Log("ARENA SELF-CHECK " + (pass ? "PASSED: " : "FAILED: ") + report);
         EditorUtility.DisplayDialog("Arena of Kemet — Self-Check",

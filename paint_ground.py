@@ -76,7 +76,7 @@ def path_point(pts, frac):
     return pts[-1]
 
 for lane in LANES:
-    for f in (0.30, 0.42, 0.58, 0.70):
+    for f in (0.14, 0.30, 0.42, 0.58, 0.70, 0.86):
         x, z = path_point(lane, f)
         disc(x, z, 3.6, (140, 124, 92))
         d.ellipse([px(x - 3.6), py(z + 3.6), px(x + 3.6), py(z - 3.6)],

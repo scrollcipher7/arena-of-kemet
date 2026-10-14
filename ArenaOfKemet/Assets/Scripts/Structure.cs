@@ -18,17 +18,67 @@ public class Structure : MonoBehaviour
         if (health == null) health = gameObject.AddComponent<Health>();
         health.Init(isCore ? 2600f : 1500f);
         health.armor = 8f;
-        if (!isCore) health.mitigation = Mitigation;
+        health.mitigation = Mitigation;
         health.OnDied += killer => GameManager.Instance.OnStructureDown(this, killer);
     }
 
+    // THE GATE LAW — read off the maker's own maps of both his games:
+    // a tower cannot be wounded while the tower IN FRONT of it in its
+    // lane still stands, and the core sleeps behind its gates — one
+    // gate of its court must fall before the heart can be touched.
+    float gateFlashT = 0f;
+
+    public int Tier()
+    {
+        if (isCore) return 4;
+        if (gameObject.name.Contains("_Gate")) return 3;
+        if (gameObject.name.Contains("_Inner")) return 2;
+        return 1;
+    }
+
+    bool Gated()
+    {
+        var gm = GameManager.Instance;
+        if (gm == null) return false;
+        int myTier = Tier();
+        if (myTier <= 1) return false;
+        foreach (var s in gm.structures)
+        {
+            if (s == this || s.team != team) continue;
+            if (isCore)
+            {
+                if (s.Tier() == 3 && s.health.dead) return false;
+            }
+            else
+            {
+                if (s.isCore) continue;
+                if (GameManager.LaneOf(s) != GameManager.LaneOf(this)) continue;
+                if (s.Tier() == myTier - 1 && !s.health.dead) return true;
+            }
+        }
+        return isCore;
+    }
+
     // The HoK tower laws, judging every wound before it lands:
+    // - The gate law above all: a gated stone takes NO wound at all.
     // - Time mitigation vs HEROES: -25% before 4:00, -10% until 10:00,
     //   then the floor of -5% forever.
     // - Anti-backdoor: with no enemy minions inside its ground, the
     //   stone hardens — all damage cut by 55%.
     float Mitigation(GameObject src)
     {
+        if (Gated())
+        {
+            // The wound is refused — and the refusal is SEEN: the
+            // shield answers with a pale flash over the stone.
+            if (Time.time - gateFlashT > 0.6f)
+            {
+                gateFlashT = Time.time;
+                HitFlash.Spawn(transform.position + Vector3.up * 3.4f,
+                    new Color(0.75f, 0.88f, 1f), 2.6f, 0.25f);
+            }
+            return 0f;
+        }
         float m = 1f;
         var gm = GameManager.Instance;
         float t = gm != null ? gm.matchTime : 0f;
