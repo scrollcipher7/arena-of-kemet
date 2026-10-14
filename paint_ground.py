@@ -22,7 +22,7 @@ for _ in range(500):
     r = rng.uniform(4, 16)
     _shades = [(196, 164, 102), (160, 124, 70), (188, 152, 92), (146, 112, 62)]
     shade = _shades[int(rng.integers(len(_shades)))]
-    d.ellipse([px(x - r), py(z + r), px(x + r), py(z - r)], fill=shade + (60,))
+    d.ellipse([px(x - r), py(z + r), px(x + r), py(z - r)], fill=shade + (36,))
 img = img.filter(ImageFilter.GaussianBlur(18))
 d = ImageDraw.Draw(img, "RGBA")
 
@@ -31,12 +31,12 @@ for _ in range(200):
     x, z = rng.uniform(-58, 58, 2)
     r = rng.uniform(2.5, 7)
     d.ellipse([px(x - r), py(z + r), px(x + r), py(z - r)],
-              fill=(96, 104, 52, 42))
+              fill=(96, 104, 52, 28))
 for _ in range(120):
     x, z = rng.uniform(-58, 58, 2)
     r = rng.uniform(1.0, 2.6)
     d.ellipse([px(x - r), py(z + r), px(x + r), py(z - r)],
-              fill=(58, 66, 34, 50))
+              fill=(58, 66, 34, 32))
 img = img.filter(ImageFilter.GaussianBlur(6))
 d = ImageDraw.Draw(img, "RGBA")
 
@@ -120,10 +120,10 @@ for (x, z) in [(-27, 12), (27, -12)]:
               outline=(150, 120, 58), width=5)
 
 # ---------- weathering: sand freckles and pale stones ----------
-for _ in range(900):
+for _ in range(650):
     x, z = rng.uniform(-60, 60, 2)
-    r = rng.uniform(0.5, 2.2)
-    tone = (120, 96, 58, 36) if rng.random() < 0.6 else (216, 192, 140, 30)
+    r = rng.uniform(0.3, 1.1)
+    tone = (120, 96, 58, 22) if rng.random() < 0.6 else (206, 178, 120, 20)
     d.ellipse([px(x - r), py(z + r), px(x + r), py(z - r)], fill=tone)
 
 # ---------- grain + warm vignette ----------
