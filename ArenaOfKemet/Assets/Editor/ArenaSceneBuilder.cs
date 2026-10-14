@@ -70,13 +70,16 @@ public static class ArenaSceneBuilder
         Prim(PrimitiveType.Cube, "OlympusBase", root, new Vector3(50, 0.05f, 50), new Vector3(17, 0.1f, 17), stoneOly);
 
         // Towers stand THREE DEEP on every road, as in the maker's
-        // maps: Outer at 58% of the march, Inner at 30%, and the GATE
-        // at 14% — the last stone before the heart of the base.
+        // maps — and each court keeps to its OWN half of the march:
+        // Gate at 10%, Inner at 22%, Outer at 38%. (An earlier build
+        // measured the Outer against the WHOLE road and planted the
+        // two courts' front towers in each other's land — the maker's
+        // eye caught it from above. Never again.)
         for (int i = 0; i < 3; i++)
         {
             var path = GameManager.Lanes[i];
-            Vector3 ko = PathPoint(path, 0.58f), ki = PathPoint(path, 0.30f), kg = PathPoint(path, 0.14f);
-            Vector3 oo = PathPoint(path, 0.42f), oi = PathPoint(path, 0.70f), og = PathPoint(path, 0.86f);
+            Vector3 ko = PathPoint(path, 0.38f), ki = PathPoint(path, 0.22f), kg = PathPoint(path, 0.10f);
+            Vector3 oo = PathPoint(path, 0.62f), oi = PathPoint(path, 0.78f), og = PathPoint(path, 0.90f);
             BuildStructure(root, "KemetTower_" + laneName[i] + "_Outer", Team.Kemet, false, ko.x, ko.z, goldKemet);
             BuildStructure(root, "KemetTower_" + laneName[i] + "_Inner", Team.Kemet, false, ki.x, ki.z, goldKemet);
             BuildStructure(root, "KemetTower_" + laneName[i] + "_Gate", Team.Kemet, false, kg.x, kg.z, goldKemet);
