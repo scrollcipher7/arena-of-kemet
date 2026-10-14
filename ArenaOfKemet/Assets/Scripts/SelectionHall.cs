@@ -69,27 +69,30 @@ public class SelectionHall : MonoBehaviour
         var canvas = canvasGo.AddComponent<Canvas>();
         canvas.renderMode = RenderMode.ScreenSpaceOverlay;
         canvas.sortingOrder = 80;
-        canvasGo.AddComponent<CanvasScaler>();
+        var scaler = canvasGo.AddComponent<CanvasScaler>();
+        scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+        scaler.referenceResolution = new Vector2(1280, 720);
+        scaler.matchWidthOrHeight = 0.5f;
         canvasGo.AddComponent<GraphicRaycaster>();
         var root = canvasGo.transform;
         var gold = new Color(0.92f, 0.76f, 0.35f);
 
-        Panel(root, "Veil", new Color(0.01f, 0.01f, 0.02f, 0.97f), true);
+        Panel(root, "Veil", new Color(0.01f, 0.01f, 0.02f, 1f), true);
 
-        var title = Txt(root, "CHOOSE YOUR GOD", 40, gold, TextAnchor.MiddleCenter);
-        Place(title.rectTransform, new Vector2(0.5f, 1), new Vector2(0, -52), new Vector2(900, 52));
-        var sub = Txt(root, "One pool. No chains. Any god — either court.", 16,
+        var title = Txt(root, "CHOOSE YOUR GOD", 44, gold, TextAnchor.MiddleCenter);
+        Place(title.rectTransform, new Vector2(0.5f, 1), new Vector2(0, -46), new Vector2(900, 54));
+        var sub = Txt(root, "One pool. No chains. Any god — either court.", 17,
             new Color(0.85f, 0.83f, 0.78f), TextAnchor.MiddleCenter);
-        Place(sub.rectTransform, new Vector2(0.5f, 1), new Vector2(0, -88), new Vector2(900, 26));
+        Place(sub.rectTransform, new Vector2(0.5f, 1), new Vector2(0, -84), new Vector2(900, 26));
 
         rings = new Image[Gods.Length];
         for (int i = 0; i < Gods.Length; i++)
         {
             int col = i % 5, row = i / 5;
-            float x = (col - 2) * 148f;
-            float y = -190 - row * 178f;
+            float x = (col - 2) * 172f;
+            float y = -218 - row * 216f;
             var cell = Panel(root, "Cell_" + Gods[i], new Color(0.06f, 0.06f, 0.09f, 1f), false);
-            Place(cell.GetComponent<RectTransform>(), new Vector2(0.5f, 1), new Vector2(x, y), new Vector2(132, 162));
+            Place(cell.GetComponent<RectTransform>(), new Vector2(0.5f, 1), new Vector2(x, y), new Vector2(156, 202));
 
             var ring = Panel(cell.transform, "Ring", gold, false);
             var rrt = ring.GetComponent<RectTransform>();
@@ -104,7 +107,7 @@ public class SelectionHall : MonoBehaviour
                 var pic = new GameObject("Face");
                 pic.transform.SetParent(cell.transform, false);
                 var prt = pic.AddComponent<RectTransform>();
-                Place(prt, new Vector2(0.5f, 1), new Vector2(0, -8), new Vector2(116, 116));
+                Place(prt, new Vector2(0.5f, 1), new Vector2(0, -6), new Vector2(144, 144));
                 var img = pic.AddComponent<Image>();
                 img.sprite = Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(0.5f, 0.5f));
                 img.raycastTarget = false;
@@ -112,12 +115,12 @@ public class SelectionHall : MonoBehaviour
             else
             {
                 var letter = Txt(cell.transform, Gods[i].Substring(0, 1), 52, gold, TextAnchor.MiddleCenter);
-                Place(letter.rectTransform, new Vector2(0.5f, 1), new Vector2(0, -8), new Vector2(116, 116));
+                Place(letter.rectTransform, new Vector2(0.5f, 1), new Vector2(0, -6), new Vector2(144, 144));
             }
-            var nm = Txt(cell.transform, GodNames[i], 13, Color.white, TextAnchor.MiddleCenter);
-            Place(nm.rectTransform, new Vector2(0.5f, 1), new Vector2(0, -130), new Vector2(128, 18));
-            var rl = Txt(cell.transform, GodRoles[i], 10, gold, TextAnchor.MiddleCenter);
-            Place(rl.rectTransform, new Vector2(0.5f, 1), new Vector2(0, -148), new Vector2(128, 15));
+            var nm = Txt(cell.transform, GodNames[i], 16, Color.white, TextAnchor.MiddleCenter);
+            Place(nm.rectTransform, new Vector2(0.5f, 1), new Vector2(0, -156), new Vector2(152, 22));
+            var rl = Txt(cell.transform, GodRoles[i], 11, gold, TextAnchor.MiddleCenter);
+            Place(rl.rectTransform, new Vector2(0.5f, 1), new Vector2(0, -180), new Vector2(152, 16));
 
             int idx = i;
             cell.AddComponent<Button>().onClick.AddListener(() => { pick = idx; RefreshSelection(); });
@@ -125,21 +128,21 @@ public class SelectionHall : MonoBehaviour
 
         // The court: two banners. The god's origin does not choose for him.
         var kGo = Panel(root, "CourtKemet", new Color(0.2f, 0.16f, 0.05f, 1f), false);
-        Place(kGo.GetComponent<RectTransform>(), new Vector2(0.5f, 1), new Vector2(-160, -566), new Vector2(300, 44));
+        Place(kGo.GetComponent<RectTransform>(), new Vector2(0.5f, 1), new Vector2(-160, -580), new Vector2(300, 44));
         kemetBtnText = Txt(kGo.transform, "FIGHT FOR KEMET", 16, Color.white, TextAnchor.MiddleCenter);
         Stretch(kemetBtnText.rectTransform);
         kemetBtn = kGo.AddComponent<Button>();
         kemetBtn.onClick.AddListener(() => { court = Team.Kemet; RefreshSelection(); });
 
         var oGo = Panel(root, "CourtOlympus", new Color(0.1f, 0.13f, 0.18f, 1f), false);
-        Place(oGo.GetComponent<RectTransform>(), new Vector2(0.5f, 1), new Vector2(160, -566), new Vector2(300, 44));
+        Place(oGo.GetComponent<RectTransform>(), new Vector2(0.5f, 1), new Vector2(160, -580), new Vector2(300, 44));
         olyBtnText = Txt(oGo.transform, "FIGHT FOR OLYMPUS", 16, Color.white, TextAnchor.MiddleCenter);
         Stretch(olyBtnText.rectTransform);
         olyBtn = oGo.AddComponent<Button>();
         olyBtn.onClick.AddListener(() => { court = Team.Olympus; RefreshSelection(); });
 
         var war = Panel(root, "ToWar", new Color(0.35f, 0.27f, 0.08f, 1f), false);
-        Place(war.GetComponent<RectTransform>(), new Vector2(0.5f, 1), new Vector2(0, -632), new Vector2(300, 52));
+        Place(war.GetComponent<RectTransform>(), new Vector2(0.5f, 1), new Vector2(0, -648), new Vector2(300, 52));
         var warText = Txt(war.transform, "TO WAR", 22, Color.white, TextAnchor.MiddleCenter);
         Stretch(warText.rectTransform);
         war.AddComponent<Button>().onClick.AddListener(Confirm);
