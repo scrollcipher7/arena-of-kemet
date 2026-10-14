@@ -147,6 +147,7 @@ public class SelectionHall : MonoBehaviour
         Stretch(olyBtnText.rectTransform);
         olyBtn = oGo.AddComponent<Button>();
         olyBtn.onClick.AddListener(() => { court = Team.Olympus; RefreshSelection(); });
+    }
 
     void RefreshSelection()
     {
