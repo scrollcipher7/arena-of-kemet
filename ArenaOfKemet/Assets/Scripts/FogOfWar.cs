@@ -57,7 +57,7 @@ public class FogOfWar : MonoBehaviour
         m.SetTexture("_BaseMap", tex);
         mr.material = m;
         mr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-        mr.receiveShadow = false;
+        mr.receiveShadows = false;
         go.transform.position = new Vector3(0, 8.5f, 0);
     }
 
