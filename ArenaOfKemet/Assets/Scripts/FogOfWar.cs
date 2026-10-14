@@ -14,7 +14,7 @@ public class FogOfWar : MonoBehaviour
 
     const int N = 128;              // the veil is woven 128 x 128
     const float Half = 60f;         // the world spans -60..60
-    const float FogAlpha = 0.62f;
+    const float FogAlpha = 0.55f;
 
     Texture2D tex;
     Color32[] pixels;
@@ -32,7 +32,7 @@ public class FogOfWar : MonoBehaviour
         tex.filterMode = FilterMode.Bilinear;
         tex.wrapMode = TextureWrapMode.Clamp;
         for (int i = 0; i < pixels.Length; i++)
-            pixels[i] = new Color32(8, 10, 16, (byte)(FogAlpha * 255));
+            pixels[i] = new Color32(105, 108, 115, (byte)(FogAlpha * 255));
         tex.SetPixels32(pixels);
         tex.Apply();
 
@@ -114,7 +114,7 @@ public class FogOfWar : MonoBehaviour
         for (int i = 0; i < pixels.Length; i++)
         {
             byte a = (byte)((1f - clarity[i]) * FogAlpha * 255f);
-            pixels[i] = new Color32(8, 10, 16, a);
+            pixels[i] = new Color32(105, 108, 115, a);
         }
         tex.SetPixels32(pixels);
         tex.Apply(false);
