@@ -130,7 +130,7 @@ public class SelectionHall : MonoBehaviour
             Place(rl.rectTransform, new Vector2(0.5f, 1), new Vector2(0, -34), new Vector2(272, 20));
 
             int idx = i;
-            cell.AddComponent<Button>().onClick.AddListener(() => { pick = idx; RefreshSelection(); });
+            cell.AddComponent<Button>().onClick.AddListener(() => { pick = idx; Confirm(); });
         }
 
         // The court: two banners. The god's origin does not choose for him.
@@ -147,13 +147,6 @@ public class SelectionHall : MonoBehaviour
         Stretch(olyBtnText.rectTransform);
         olyBtn = oGo.AddComponent<Button>();
         olyBtn.onClick.AddListener(() => { court = Team.Olympus; RefreshSelection(); });
-
-        var war = Panel(root, "ToWar", new Color(0.35f, 0.27f, 0.08f, 1f), false);
-        Place(war.GetComponent<RectTransform>(), new Vector2(0.5f, 1), new Vector2(0, -838), new Vector2(380, 52));
-        var warText = Txt(war.transform, "TO WAR", 26, Color.white, TextAnchor.MiddleCenter);
-        Stretch(warText.rectTransform);
-        war.AddComponent<Button>().onClick.AddListener(Confirm);
-    }
 
     void RefreshSelection()
     {
